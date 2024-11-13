@@ -17,9 +17,10 @@ const resources_to_locate: string[] = [
 ];
 
 const found: Map<string, string[]> = new Map();
+
 async function run(): Promise<void> {
   const path_to_states =
-    os.homedir() + "/Projects/_todo/micro-dev-states/environment/";
+    os.homedir() + "/Projects/resource-finder/micro-dev-states/environment/";
 
   fsWalk.walk(path_to_states, async (error, entry) => {
     if (error) {
@@ -31,29 +32,35 @@ async function run(): Promise<void> {
       if (!entry.dirent.isDirectory()) {
         const state_contents = await fs.readFile(entry.path, "utf8");
         const state_data: TFState = JSON.parse(state_contents);
+        const feat_env_name = entry.path
+          .substring(path_to_states.length)
+          .split("/")[0];
 
         if (state_data.resources.length > 0) {
           state_data.resources.forEach((resource) => {
             if (resource.mode === "managed") {
               if (resources_to_locate.includes(resource.type)) {
                 resource.instances.forEach((instance) => {
+                  const key = `${feat_env_name}_${resource.type}`;
                   if (instance.attributes.arn) {
-                    if (found.has(resource.type)) {
-                      let current = found.get(resource.type);
+                    if (found.has(key)) {
+                      let current = found.get(key);
                       if (current) {
                         current.push(instance.attributes.arn);
                       } else {
                         current = [instance.attributes.arn];
                       }
-                      found.set(resource.type, current);
+                      found.set(key, current);
                     } else {
-                      found.set(resource.type, [instance.attributes.arn]);
+                      found.set(key, [instance.attributes.arn]);
                     }
                   }
                 });
               }
             }
           });
+        } else {
+          found.set(feat_env_name, []);
         }
 
         console.log(found);
