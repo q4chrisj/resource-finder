@@ -16,19 +16,17 @@ const resources_to_locate: string[] = [
   "aws_route_table",
 ];
 
-const found: Map<string, string[]> = new Map();
-
 async function run(): Promise<void> {
   const path_to_states =
     os.homedir() + "/Projects/resource-finder/micro-dev-states/environment/";
 
-  fsWalk.walk(path_to_states, async (error, entry) => {
+  fsWalk.walk(path_to_states, async (error, entries) => {
     if (error) {
       console.error(error);
       return;
     }
 
-    entry.forEach(async (entry) => {
+    entries.forEach(async (entry) => {
       if (!entry.dirent.isDirectory()) {
         const state_contents = await fs.readFile(entry.path, "utf8");
         const state_data: TFState = JSON.parse(state_contents);
@@ -37,6 +35,7 @@ async function run(): Promise<void> {
           .split("/")[0];
 
         if (state_data.resources.length > 0) {
+          const found = new Map<string, string[]>();
           state_data.resources.forEach((resource) => {
             if (resource.mode === "managed") {
               if (resources_to_locate.includes(resource.type)) {
@@ -57,13 +56,17 @@ async function run(): Promise<void> {
                   }
                 });
               }
+            } else {
+              // console.log(
+              //   `${feat_env_name} does not contain any ${resource.type} resources`,
+              // );
             }
           });
-        } else {
-          found.set(feat_env_name, []);
-        }
 
-        console.log(found);
+          if (found.size > 0) {
+            console.log(found);
+          }
+        }
       }
     });
   });
