@@ -1,10 +1,10 @@
 #!/bin/bash
 BUCKET_NAME="state.terraform.dev.microservices.connect.q4inc.com.us-east-1"
-TARGET_DATE="2024-01-01"  # Replace with your target date
+TARGET_DATE="2023-01-01" 
 
 # List and delete objects older than TARGET_DATE
-aws s3api list-objects-v2 --bucket state.terraform.dev.microservices.connect.q4inc.com.us-east-1 \
-  --query 'Contents[?LastModified<=`2024-01-01` && !starts_with(Key, `environment/dev/`)].[Key, LastModified]' \
+aws s3api list-objects-v2 --bucket $BUCKET_NAME \
+  --query 'Contents[?LastModified<=`'"$TARGET_DATE"'` && !starts_with(Key, `environment/dev/`)].[Key, LastModified]' \
   --output text | 
 while read -r OBJECT_KEY; do
     echo "Deleting $OBJECT_KEY..."
